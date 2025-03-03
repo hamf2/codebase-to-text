@@ -41,6 +41,7 @@ code_to_text.get_file()
 --input: Input path (local folder or GitHub URL).
 --output: Output file path.
 --output_type: Output file type (txt or docx).
+--exclude_type: Comma-separated list of file extensions to exclude (e.g., .xlsx,.csv,.pdf).
 
 
 ## Examples
@@ -49,10 +50,9 @@ Convert a local codebase to a text file:
 codebase-to-text --input "~/projects/my_project" --output "output.txt" --output_type "txt"
 ```
 
-Convert a GitHub repository to a Microsoft Word document:
-
+Convert a GitHub repository to a Microsoft Word document, excluding specific file types:
 ```bash
-codebase-to-text --input "https://github.com/username/repo_name" --output "output.docx" --output_type "docx"
+codebase-to-text --input "https://github.com/username/repo_name" --output "output.docx" --output_type "docx" --exclude_type ".xlsx,.csv,.pdf"
 ```
 
 
