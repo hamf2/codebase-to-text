@@ -5,7 +5,7 @@ setup(
     name="codebase-to-text",
     version="1.0.7",
     packages=find_packages(),
-    install_requires=["python-docx","gitpython"],
+    install_requires=["python-docx", "gitpython", "pathspec"],
     entry_points={
         "console_scripts": [
             "codebase-to-text = codebase_to_text.codebase_to_text:main",

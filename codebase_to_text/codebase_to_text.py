@@ -2,17 +2,20 @@ import os
 import argparse
 import git
 import shutil
+import pathspec
 from pathlib import Path
 from docx import Document
 import tempfile
 class CodebaseToText:
-    def __init__(self, input_path, output_path, output_type, verbose, exclude_hidden, exclude_types=None):
+    def __init__(self, input_path, output_path, output_type, verbose, exclude_hidden, exclude_gitignore, exclude_types=None):
         self.input_path = input_path
         self.output_path = output_path
         self.output_type = output_type
         self.verbose = verbose
         self.exclude_hidden = exclude_hidden
+        self.exclude_gitignore = exclude_gitignore
         self.exclude_types = exclude_types.split(",") if exclude_types else []
+        self.gitignore_spec = None
 
     def _parse_folder(self, folder_path):
         tree = ""
@@ -20,10 +23,14 @@ class CodebaseToText:
             # Exclude hidden directories if exclude_hidden is True
             if self.exclude_hidden:
                 dirs[:] = [d for d in dirs if not self._is_hidden_file(os.path.join(root, d))]
+            if self.exclude_gitignore and self.gitignore_spec:
+                dirs[:] = [d for d in dirs if not self._is_gitignored(os.path.join(root, d), folder_path, is_dir=True)]
 
             level = root.replace(folder_path, '').count(os.sep)
             indent = ' ' * 4 * (level)
             tree += '{}{}/\n'.format(indent, os.path.basename(root))
+            if self.exclude_gitignore and self.gitignore_spec:
+                files = [f for f in files if not self._is_gitignored(os.path.join(root, f), folder_path, is_dir=False)]
             subindent = ' ' * 4 * (level + 1)
             for f in files: 
                 tree += '{}{}\n'.format(subindent, f)
@@ -45,10 +52,29 @@ class CodebaseToText:
                 return True
         return False
 
+    def _load_gitignore(self, base_path):
+        """Load .gitignore from the base path if it exists."""
+        gitignore_file = os.path.join(base_path, ".gitignore")
+        if os.path.exists(gitignore_file):
+            with open(gitignore_file, "r") as f:
+                lines = f.readlines()
+            self.gitignore_spec = pathspec.PathSpec.from_lines("gitwildmatch", lines)
+        else:
+            self.gitignore_spec = None
+
+    def _is_gitignored(self, path, base_path, is_dir=False):
+        if not self.gitignore_spec:
+            return False
+        rel_path = os.path.relpath(path, base_path)
+        if is_dir and not rel_path.endswith(os.sep):
+            rel_path += os.sep
+        return self.gitignore_spec.match_file(rel_path)
 
     def _process_files(self, path):
         content = ""
         for root, _, files in os.walk(path):
+            if self.exclude_gitignore and self.gitignore_spec:
+                files = [f for f in files if not self._is_gitignored(os.path.join(root, f), path, is_dir=False)]
             for file in files:
                 file_extension = os.path.splitext(file)[1]
                 if file_extension in self.exclude_types:
@@ -80,11 +106,15 @@ class CodebaseToText:
         file_contents = ""
         if self.is_github_repo():
             self._clone_github_repo()
-            folder_structure = self._parse_folder(self.temp_folder_path)
-            file_contents = self._process_files(self.temp_folder_path)
+            base_folder = self.temp_folder_path
         else:
-            folder_structure = self._parse_folder(self.input_path)
-            file_contents = self._process_files(self.input_path)
+            base_folder = self.input_path
+
+        if self.exclude_gitignore:
+            self._load_gitignore(base_folder)
+
+        folder_structure = self._parse_folder(base_folder)
+        file_contents = self._process_files(base_folder)
         
         # Section headers
         folder_structure_header = "Folder Structure"
@@ -139,6 +169,7 @@ def main():
     parser.add_argument("--output", help="Output file path", required=True)
     parser.add_argument("--output_type", help="Output file type (txt or docx)", required=True)
     parser.add_argument("--exclude_hidden", help="Exclude hidden files and folders", action="store_true")
+    parser.add_argument("--exclude_gitignore", help="Exclude files/folders ignored by .gitignore", action="store_true")
     parser.add_argument("--verbose", help="Show useful information", action="store_true")
     parser.add_argument("--exclude_type", help="Comma-separated list of file extensions to exclude, e.g., '.xlsx,.pdf'", default="")
 
@@ -150,6 +181,7 @@ def main():
         output_type=args.output_type,
         verbose=args.verbose,
         exclude_hidden=args.exclude_hidden,
+        exclude_gitignore=args.exclude_gitignore,
         exclude_types=args.exclude_type
     )
     code_to_text.get_file()
