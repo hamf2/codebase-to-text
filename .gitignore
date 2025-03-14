@@ -8,5 +8,6 @@ build/
 dist/
 .eggs/
 .vscode/
+.git/
 *.egg-info/
 code.txt
