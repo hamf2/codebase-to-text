@@ -3,11 +3,21 @@ import argparse
 import git
 import shutil
 import pathspec
-from pathlib import Path
 from docx import Document
 import tempfile
+
+
 class CodebaseToText:
-    def __init__(self, input_path, output_path, output_type, verbose, exclude_hidden, exclude_gitignore, exclude_types=None):
+    def __init__(
+        self,
+        input_path,
+        output_path,
+        output_type="txt",
+        verbose=False,
+        exclude_hidden=False,
+        exclude_gitignore=False,
+        exclude_types=None
+    ):
         self.input_path = input_path
         self.output_path = output_path
         self.output_type = output_type
@@ -26,14 +36,14 @@ class CodebaseToText:
             if self.exclude_gitignore and self.gitignore_spec:
                 dirs[:] = [d for d in dirs if not self._is_gitignored(os.path.join(root, d), folder_path, is_dir=True)]
 
-            level = root.replace(folder_path, '').count(os.sep)
-            indent = ' ' * 4 * (level)
-            tree += '{}{}/\n'.format(indent, os.path.basename(root))
+            level = root.replace(folder_path, "").count(os.sep)
+            indent = " " * 4 * (level)
+            tree += "{}{}/\n".format(indent, os.path.basename(root))
             if self.exclude_gitignore and self.gitignore_spec:
                 files = [f for f in files if not self._is_gitignored(os.path.join(root, f), folder_path, is_dir=False)]
-            subindent = ' ' * 4 * (level + 1)
-            for f in files: 
-                tree += '{}{}\n'.format(subindent, f)
+            subindent = " " * 4 * (level + 1)
+            for f in files:
+                tree += "{}{}\n".format(subindent, f)
 
         if self.verbose:
             print(f"The file tree to be processed:\n {tree}")
@@ -41,14 +51,14 @@ class CodebaseToText:
         return tree
 
     def _get_file_contents(self, file_path):
-        with open(file_path, 'r') as file:
+        with open(file_path, "r") as file:
             return file.read()
-        
+
     def _is_hidden_file(self, file_path):
         components = os.path.normpath(file_path).split(os.sep)
         # print(f"componetns {components}")
         for c in components:
-            if c.startswith((".","__")):
+            if c.startswith((".", "__")):
                 return True
         return False
 
@@ -97,7 +107,7 @@ class CodebaseToText:
                     content += f"{file_content}"
                     # Add section headers and delimiters after each file
                     content += f"\n\n{'-' * 50}\nFile End\n{'-' * 50}\n"
-                except:
+                except Exception:
                     print(f"Couldn't process {file_path}")
         return content
 
@@ -115,19 +125,18 @@ class CodebaseToText:
 
         folder_structure = self._parse_folder(base_folder)
         file_contents = self._process_files(base_folder)
-        
+
         # Section headers
         folder_structure_header = "Folder Structure"
         file_contents_header = "File Contents"
-        
+
         # Delimiters
         delimiter = "-" * 50
-        
+
         # Format the final text
         final_text = f"{folder_structure_header}\n{delimiter}\n{folder_structure}\n\n{file_contents_header}\n{delimiter}\n{file_contents}"
-        
-        return final_text
 
+        return final_text
 
     def get_file(self):
         text = self.get_text()
@@ -140,13 +149,11 @@ class CodebaseToText:
             doc.save(self.output_path)
         else:
             raise ValueError("Invalid output type. Supported types: txt, docx")
-        
-    #### Github ####
 
     def _clone_github_repo(self):
         try:
             self.temp_folder_path = tempfile.mkdtemp(prefix="github_repo_")
-            repo = git.Repo.clone_from(self.input_path, self.temp_folder_path)
+            git.Repo.clone_from(self.input_path, self.temp_folder_path)
             if self.verbose:
                 print("GitHub repository cloned successfully.")
         except Exception as e:
@@ -182,13 +189,14 @@ def main():
         verbose=args.verbose,
         exclude_hidden=args.exclude_hidden,
         exclude_gitignore=args.exclude_gitignore,
-        exclude_types=args.exclude_type
+        exclude_types=args.exclude_type,
     )
     code_to_text.get_file()
 
     # Remove temporary folder if it was used
-    #if code_to_text.is_temp_folder_used():
+    # if code_to_text.is_temp_folder_used():
     #    code_to_text.clean_up_temp_folder()
+
 
 if __name__ == "__main__":
     main()
