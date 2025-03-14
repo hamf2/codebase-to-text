@@ -172,9 +172,9 @@ class CodebaseToText:
 
 def main():
     parser = argparse.ArgumentParser(description="Generate text from codebase.")
-    parser.add_argument("--input", help="Input path (folder or GitHub URL)", required=True)
-    parser.add_argument("--output", help="Output file path", required=True)
-    parser.add_argument("--output_type", help="Output file type (txt or docx)", required=True)
+    parser.add_argument("--input", help="Input path (folder or GitHub URL)", default=".")
+    parser.add_argument("--output", help="Output file path", default="codebase_as_text.txt")
+    parser.add_argument("--output_type", help="Output file type (txt or docx)", default="txt")
     parser.add_argument("--exclude_hidden", help="Exclude hidden files and folders", action="store_true")
     parser.add_argument("--exclude_gitignore", help="Exclude files/folders ignored by .gitignore", action="store_true")
     parser.add_argument("--verbose", help="Show useful information", action="store_true")
