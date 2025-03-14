@@ -4,7 +4,7 @@ import os
 print(os.path.dirname(__file__))
 setup(
     name="codebase-to-text",
-    version="1.0.7",
+    version="1.0.8",
     packages=find_packages(),
     install_requires=["python-docx", "gitpython", "pathspec"],
     entry_points={
