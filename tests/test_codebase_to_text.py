@@ -21,9 +21,9 @@ class TestCodebaseToText(unittest.TestCase):
         expected_text = (
             f"Folder Structure\n--------------------------------------------------\n{self.test_folder_path}/\n    test_file1.txt\n    "
             f"test_file2.txt\n\n\nFile Contents\n--------------------------------------------------\n\n\n"
-            f"{self.test_folder_path}\\test_file1.txt\nFile type: .txt\nTest file 1 content\n\n"
+            f"{os.path.join(self.test_folder_path,'test_file1.txt')}\nFile type: .txt\nTest file 1 content\n\n"
             f"--------------------------------------------------\nFile End\n--------------------------------------------------\n\n\n"
-            f"{self.test_folder_path}\\test_file2.txt\nFile type: .txt\nTest file 2 content\n\n"
+            f"{os.path.join(self.test_folder_path,'test_file2.txt')}\nFile type: .txt\nTest file 2 content\n\n"
             f"--------------------------------------------------\nFile End\n--------------------------------------------------\n"
         )
         self.assertEqual(text, expected_text)
